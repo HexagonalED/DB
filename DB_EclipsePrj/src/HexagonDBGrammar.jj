@@ -60,7 +60,9 @@ TOKEN :
 | < UNDERSCORE : "_" >
 | < SIGN : "+" | "-" >
 | < DIGIT : [ "0"-"9" ] >
+| < DOT : "." >
 | < ALPHABET : [ "A"-"Z", "a"-"z" ] >
+| < SPACE : " " | "\t" >
 }
 
 void command() :
@@ -259,5 +261,46 @@ void insertQuery() :
     valueList(/*?*/)     )
 }
 
+void valueList() :
+{
+}
+{
+  < LEFT_PAREN >
+  valueType()
+  (    < COMMA >valueType()
+  )*
+  < RIGHT_PAREN >
+}
+
+void valueType() :
+{
+}
+{
+	valueInt() | valueFloat() | valueString()
+}
+
+void valueInt() :
+{
+}
+{
+  (< SIGN >)?(< DIGIT >)*
+}
+
+void valueFloat() :
+{
+}
+{
+  valueInt()
+  < DOT >
+  valueInt()
+}
+
+void valueString() :
+{
+}
+{
+  (< ALPHABET >|< DIGIT >)
+  (< ALPHABET >|< UNDERSCORE >|< SPACE >|< DIGIT >)*
+}
 
 
