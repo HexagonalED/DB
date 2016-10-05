@@ -1,0 +1,263 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options
+{
+  static = true;
+  DEBUG_PARSER = false;
+  IGNORE_CASE = true;
+}
+PARSER_BEGIN(HexagonDBMSParser)
+public class HexagonDBMSParser{
+
+  public static final int PRINT_SYNTAX_ERROR = 0;
+  public static final int PRINT_CREATE_TABLE = 1;
+  public static final int PRINT_DELETE_TABLE = 2;
+  public static final int PRINT_DESC = 3;
+  public static final int PRINT_INSERT = 4;
+    public static void main(String args []) throws ParseException  {
+    HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
+    System.out.print("HexagonDB_2012-11253> ");    while (true)
+    {      System.out.println("Reading from standard input...");      System.out.print("Enter an expression :");      try
+      {
+        parser.command();      }      catch (Exception e)
+      {        printMessage(PRINT_SYNTAX_ERROR);
+        HexagonDBMSParser.ReInit(System.in);      }      catch (Error e)      {        System.out.println("Oops.");        System.out.println(e.getMessage());        break;      }    }  }
+  public static void printMessage(int q)
+  {
+    switch(q)
+    {
+      case PRINT_SYNTAX_ERROR:
+      	System.out.println("Syntax error");
+      	break;
+      case PRINT_CREATE_TABLE:
+      	System.out.println("\'CREATE TABLE\' requested");
+      	break;
+    }
+    System.out.print("HexagonDB_2012-11253> ");
+  }}PARSER_END(HexagonDBMSParser)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* Keywords */
+{
+  < EXIT : "exit" >
+| < INT : "int" >
+| < CHAR : "char" >
+| < DATE : "date" >
+| < CREATE_TABLE : "create table" >
+| < DROP_TABLE : "drop table" >
+| < DESC : "desc" >
+| < INSERT_INTO : "insert into" >
+| < NOT_NULL : "not null" >
+| < PRIMARY_KEY : "primary key" >
+| < FOREIGN_KEY : "foreign key" >
+| < REFERENCES : "references" >
+| < VALUES : "values" >
+}
+
+TOKEN :
+{
+  < SEMICOLON : ";" >
+| < LEFT_PAREN : "(" >
+| < RIGHT_PAREN : ")" >
+| < COMMA : "," >
+| < UNDERSCORE : "_" >
+| < SIGN : "+" | "-" >
+| < DIGIT : [ "0"-"9" ] >
+| < ALPHABET : [ "A"-"Z", "a"-"z" ] >
+}
+
+void command() :
+{}
+{
+  queryList()
+  | (< EXIT >< SEMICOLON >
+  	 {
+          System.exit(0);
+     }) 
+}
+
+void queryList() :
+{
+  int q;
+}
+{
+  (q = query()< SEMICOLON >
+    {
+      printMessage(q);
+    })+
+}
+
+int query() :
+{
+  int q;
+}
+{
+  (    (
+      createTableQuery()
+   		{
+      	q = PRINT_CREATE_TABLE;
+    	}
+    )
+  	|(
+  	  dropTableQuery()
+  	  {
+  	    q = PRINT_DELETE_TABLE;
+  	  }
+  	)
+  	|(
+  	  descQuery()
+  	  {
+  	    q = PRINT_DESC;
+  	  }
+  	)
+  	|(
+  	  insertQuery()
+  	  {
+  	    q = PRINT_INSERT;
+  	  }
+  	)      
+  )
+  ({
+    return q;
+  })
+}
+
+void createTableQuery() :
+{}
+{
+  < CREATE_TABLE >
+  tableName()
+  tableElementList()
+}
+void tableElementList() :
+{}
+{
+  < LEFT_PAREN >
+  tableElement()
+  (
+    < COMMA >
+    tableElement()
+  )*
+  < RIGHT_PAREN >
+}
+void tableElement() :
+{
+}
+{
+  columnDefinition()
+| tableConstraintDefinition()
+}
+void columnDefinition() :
+{}
+{
+  columnName()
+  dataType()
+  (
+    < NOT_NULL >
+  )?
+}
+void tableConstraintDefinition() :
+{}
+{
+  primaryKeyConstraint()
+| referentialConstraint()
+}
+void primaryKeyConstraint() :
+{}
+{
+  < PRIMARY_KEY >
+  columnNameList()
+}
+void referentialConstraint() :
+{}
+{
+  < FOREIGN_KEY >
+  columnNameList()
+  < REFERENCES >
+  tableName()
+  columnNameList()
+}
+void columnNameList() :
+{}
+{
+  < LEFT_PAREN >
+  columnName()
+  (
+    < COMMA >
+    columnName()
+  )*
+  < RIGHT_PAREN >
+}
+void dataType() :
+{}
+{
+  < INT >
+| (
+    < CHAR >
+    < LEFT_PAREN >
+    intValue()
+    < RIGHT_PAREN >
+  )
+| < DATE >
+}
+void tableName() :
+{}
+{
+  legalIdentifier()
+}
+void columnName() :
+{}
+{
+  legalIdentifier()
+}
+void intValue() :
+{}
+{
+  (
+    < SIGN >
+  )?
+  (
+    < DIGIT >
+  )+
+}
+
+void legalIdentifier() :
+{}
+{
+  < ALPHABET >
+  (
+    < ALPHABET > | < UNDERSCORE >
+  )*
+}
+
+
+void dropTableQuery() :
+{
+}
+{
+  (
+    < DROP_TABLE >
+    tableName()
+  )
+}
+
+void descQuery() :
+{
+}
+{
+  (
+    < DESC >
+    tableName()  )
+}
+
+void insertQuery() :
+{
+}
+{
+  (
+    < INSERT_INTO >
+    tableName()
+    columnNameList()
+    < VALUES >
+    valueList(/*?*/)     )
+}
+
+
+
