@@ -6,6 +6,9 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
   public static final int PRINT_DELETE_TABLE = 2;
   public static final int PRINT_DESC = 3;
   public static final int PRINT_INSERT = 4;
+  public static final int PRINT_DELETE = 4;
+  public static final int PRINT_SELECT = 4;
+  public static final int PRINT_SHOW_TABLES = 4;
 
   public static void main(String args []) throws ParseException
   {
@@ -52,6 +55,9 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     case DROP_TABLE:
     case DESC:
     case INSERT_INTO:
+    case DELETE_FROM:
+    case SELECT:
+    case SHOW_TABLES:
       queryList();
       break;
     case EXIT:
@@ -78,6 +84,9 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       case DROP_TABLE:
       case DESC:
       case INSERT_INTO:
+      case DELETE_FROM:
+      case SELECT:
+      case SHOW_TABLES:
         ;
         break;
       default:
@@ -105,6 +114,18 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     case INSERT_INTO:
       insertQuery();
             q = PRINT_INSERT;
+      break;
+    case DELETE_FROM:
+      deleteQuery();
+            q = PRINT_DELETE;
+      break;
+    case SELECT:
+      selectQuery();
+            q = PRINT_SELECT;
+      break;
+    case SHOW_TABLES:
+      showTablesQuery();
+            q = PRINT_SHOW_TABLES;
       break;
     default:
       jj_la1[2] = jj_gen;
@@ -413,6 +434,153 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     }
   }
 
+  static final public void deleteQuery() throws ParseException {
+    jj_consume_token(DELETE_FROM);
+    tableName();
+    whereClauseList();
+  }
+
+  static final public void whereClauseList() throws ParseException {
+    jj_consume_token(WHERE);
+    conditionDefinition();
+    label_9:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case AND:
+        ;
+        break;
+      default:
+        jj_la1[19] = jj_gen;
+        break label_9;
+      }
+      jj_consume_token(AND);
+      conditionDefinition();
+    }
+  }
+
+  static final public void conditionDefinition() throws ParseException {
+    equationLeft();
+    jj_consume_token(EQUAL);
+    equationRight();
+  }
+
+  static final public void equationLeft() throws ParseException {
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case ALPHABET:
+      tableName();
+      jj_consume_token(DOT);
+      break;
+    default:
+      jj_la1[20] = jj_gen;
+      ;
+    }
+    columnName();
+  }
+
+  static final public void equationRight() throws ParseException {
+    valueType();
+  }
+
+  static final public void selectQuery() throws ParseException {
+    jj_consume_token(SELECT);
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case ALPHABET:
+      tableName();
+      jj_consume_token(DOT);
+      break;
+    default:
+      jj_la1[21] = jj_gen;
+      ;
+    }
+    columnName();
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case AS:
+      renameDef();
+      break;
+    default:
+      jj_la1[22] = jj_gen;
+      ;
+    }
+    label_10:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case COMMA:
+        ;
+        break;
+      default:
+        jj_la1[23] = jj_gen;
+        break label_10;
+      }
+      jj_consume_token(COMMA);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case ALPHABET:
+        tableName();
+        jj_consume_token(DOT);
+        break;
+      default:
+        jj_la1[24] = jj_gen;
+        ;
+      }
+      columnName();
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case AS:
+        renameDef();
+        break;
+      default:
+        jj_la1[25] = jj_gen;
+        ;
+      }
+    }
+    jj_consume_token(FROM);
+    tableName();
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case AS:
+      renameDef();
+      break;
+    default:
+      jj_la1[26] = jj_gen;
+      ;
+    }
+    label_11:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case COMMA:
+        ;
+        break;
+      default:
+        jj_la1[27] = jj_gen;
+        break label_11;
+      }
+      jj_consume_token(COMMA);
+      tableName();
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case AS:
+        renameDef();
+        break;
+      default:
+        jj_la1[28] = jj_gen;
+        ;
+      }
+    }
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case WHERE:
+      whereClauseList();
+      break;
+    default:
+      jj_la1[29] = jj_gen;
+      ;
+    }
+  }
+
+  static final public void renameDef() throws ParseException {
+    jj_consume_token(AS);
+    legalIdentifier();
+  }
+
+  static final public void showTablesQuery() throws ParseException {
+    jj_consume_token(SHOW_TABLES);
+  }
+
   static private boolean jj_initialized_once = false;
   /** Generated Token Manager. */
   static public HexagonDBMSParserTokenManager token_source;
@@ -423,13 +591,18 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
   static public Token jj_nt;
   static private int jj_ntk;
   static private int jj_gen;
-  static final private int[] jj_la1 = new int[19];
+  static final private int[] jj_la1 = new int[30];
   static private int[] jj_la1_0;
+  static private int[] jj_la1_1;
   static {
       jj_la1_init_0();
+      jj_la1_init_1();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x1e20,0x1e00,0x1e00,0x200000,0x400c000,0x2000,0xc000,0x200000,0x1c0,0x800000,0x1000000,0x4400000,0x4400000,0x200000,0x800000,0x1000000,0x5000000,0xd400000,0xd400000,};
+      jj_la1_0 = new int[] {0xfe20,0xfe00,0xfe00,0x10000000,0x60000,0x10000,0x60000,0x10000000,0x1c0,0x40000000,0x80000000,0x20000000,0x20000000,0x10000000,0x40000000,0x80000000,0x80000000,0xa0000000,0xa0000000,0x400000,0x0,0x0,0x1000000,0x10000000,0x0,0x1000000,0x1000000,0x10000000,0x1000000,0x200000,};
+   }
+   private static void jj_la1_init_1() {
+      jj_la1_1 = new int[] {0x0,0x0,0x0,0x0,0x2,0x0,0x0,0x0,0x0,0x0,0x0,0x2,0x2,0x0,0x0,0x0,0x2,0x6,0x6,0x0,0x2,0x2,0x0,0x0,0x2,0x0,0x0,0x0,0x0,0x0,};
    }
 
   /** Constructor with InputStream. */
@@ -450,7 +623,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -464,7 +637,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -481,7 +654,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -491,7 +664,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -507,7 +680,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -516,7 +689,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   static private Token jj_consume_token(int kind) throws ParseException {
@@ -567,21 +740,24 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
   /** Generate ParseException. */
   static public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[28];
+    boolean[] la1tokens = new boolean[36];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 19; i++) {
+    for (int i = 0; i < 30; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
             la1tokens[j] = true;
           }
+          if ((jj_la1_1[i] & (1<<j)) != 0) {
+            la1tokens[32+j] = true;
+          }
         }
       }
     }
-    for (int i = 0; i < 28; i++) {
+    for (int i = 0; i < 36; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

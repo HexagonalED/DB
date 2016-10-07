@@ -14,6 +14,9 @@ public class HexagonDBMSParser{
   public static final int PRINT_DELETE_TABLE = 2;
   public static final int PRINT_DESC = 3;
   public static final int PRINT_INSERT = 4;
+  public static final int PRINT_DELETE = 4;
+  public static final int PRINT_SELECT = 4;
+  public static final int PRINT_SHOW_TABLES = 4;
     public static void main(String args []) throws ParseException  {
     HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
     System.out.print("HexagonDB_2012-11253> ");    while (true)
@@ -44,11 +47,18 @@ public class HexagonDBMSParser{
 | < DROP_TABLE : "drop table" >
 | < DESC : "desc" >
 | < INSERT_INTO : "insert into" >
+| < DELETE_FROM : "delete from" >
+| < SELECT : "select" >
+| < SHOW_TABLES : "show tables" >
 | < NOT_NULL : "not null" >
 | < PRIMARY_KEY : "primary key" >
 | < FOREIGN_KEY : "foreign key" >
 | < REFERENCES : "references" >
 | < VALUES : "values" >
+| < WHERE : "where" >
+| < AND : "and" >
+| < FROM : "from" >
+| < AS : "as" >
 }
 
 TOKEN :
@@ -63,6 +73,7 @@ TOKEN :
 | < DOT : "." >
 | < ALPHABET : [ "A"-"Z", "a"-"z" ] >
 | < SPACE : " " | "\t" >
+| < EQUAL : "=" >
 }
 
 void command() :
@@ -114,7 +125,25 @@ int query() :
   	  {
   	    q = PRINT_INSERT;
   	  }
-  	)      
+  	)
+  	|(
+  	  deleteQuery()
+  	  {
+  	    q = PRINT_DELETE;
+  	  }
+  	)
+  	|(
+  	  selectQuery()
+  	  {
+  	    q = PRINT_SELECT;
+  	  }
+  	)  
+  	|(
+  	  showTablesQuery()
+  	  {
+  	    q = PRINT_SHOW_TABLES;
+  	  }
+  	)    
   )
   ({
     return q;
@@ -302,5 +331,79 @@ void valueString() :
   (< ALPHABET >|< DIGIT >)
   (< ALPHABET >|< UNDERSCORE >|< SPACE >|< DIGIT >)*
 }
+
+
+void deleteQuery() :
+{
+}
+{
+  < DELETE_FROM >
+  tableName()
+  whereClauseList()
+}
+
+void whereClauseList():
+{
+}
+{
+  < WHERE >
+  conditionDefinition()
+  (< AND >conditionDefinition())*
+}
+
+void conditionDefinition():
+{
+}
+{
+  equationLeft()
+  < EQUAL >
+  equationRight()
+}
+
+void equationLeft():
+{
+}
+{  
+ (tableName()< DOT >)?columnName()
+}
+
+void equationRight():
+{
+}
+{
+  (valueType()|equationLeft()) 
+}
+
+void selectQuery() :
+{
+}
+{
+  < SELECT >
+  ((tableName()< DOT >)?columnName()(renameDef())?)
+  (
+    < COMMA >(tableName()< DOT >)?columnName()(renameDef())?  )*
+  < FROM >
+  (    (tableName()(renameDef())?)
+    (      < COMMA >(tableName()(renameDef())?)
+    )*
+  )
+  (whereClauseList())?
+}
+
+void renameDef() :
+{
+}
+{
+  < AS >
+  legalIdentifier()
+}
+
+void showTablesQuery() :
+{
+}
+{
+  < SHOW_TABLES >
+}
+
 
 
