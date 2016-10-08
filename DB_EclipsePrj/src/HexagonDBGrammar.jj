@@ -20,11 +20,12 @@ public class HexagonDBMSParser{
     public static void main(String args []) throws ParseException  {
     HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
     System.out.print("HexagonDB_2012-11253> ");    while (true)
-    {      System.out.println("Reading from standard input...");      System.out.print("Enter an expression :");      try
+    {      try
       {
         parser.command();      }      catch (Exception e)
       {        printMessage(PRINT_SYNTAX_ERROR);
         HexagonDBMSParser.ReInit(System.in);      }      catch (Error e)      {        System.out.println("Oops.");        System.out.println(e.getMessage());        break;      }    }  }
+  
   public static void printMessage(int q)
   {
     switch(q)

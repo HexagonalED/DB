@@ -16,8 +16,6 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     System.out.print("HexagonDB_2012-11253> ");
     while (true)
     {
-      System.out.println("Reading from standard input...");
-      System.out.print("Enter an expression :");
       try
       {
         parser.command();
@@ -35,6 +33,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       }
     }
   }
+
   public static void printMessage(int q)
   {
     switch(q)

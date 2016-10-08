@@ -6,3 +6,10 @@
 /HexagonDBMSParserConstants.java
 /HexagonDBMSParser$JJCalls.class
 /HexagonDBMSParser$LookaheadSuccess.class
+/HexagonDBMSParser.class
+/HexagonDBMSParserConstants.class
+/HexagonDBMSParserTokenManager.class
+/ParseException.class
+/SimpleCharStream.class
+/Token.class
+/TokenMgrError.class
