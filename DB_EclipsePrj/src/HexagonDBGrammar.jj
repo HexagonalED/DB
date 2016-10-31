@@ -5,18 +5,23 @@
   static = true;
   DEBUG_PARSER = false;
   IGNORE_CASE = true;
+  LOOKAHEAD = 3;
+  //FORCE_LA_CHECK =true;
 }
 PARSER_BEGIN(HexagonDBMSParser)
+import com.sleepycat.je.*;
+
+
 public class HexagonDBMSParser{
 
   public static final int PRINT_SYNTAX_ERROR = 0;
   public static final int PRINT_CREATE_TABLE = 1;
-  public static final int PRINT_DELETE_TABLE = 2;
+  public static final int PRINT_DROP_TABLE = 2;
   public static final int PRINT_DESC = 3;
   public static final int PRINT_INSERT = 4;
-  public static final int PRINT_DELETE = 4;
-  public static final int PRINT_SELECT = 4;
-  public static final int PRINT_SHOW_TABLES = 4;
+  public static final int PRINT_DELETE = 5;
+  public static final int PRINT_SELECT = 6;
+  public static final int PRINT_SHOW_TABLES = 7;
     public static void main(String args []) throws ParseException  {
     HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
     System.out.print("HexagonDB_2012-11253> ");    while (true)
@@ -24,6 +29,7 @@ public class HexagonDBMSParser{
       {
         parser.command();      }      catch (Exception e)
       {        printMessage(PRINT_SYNTAX_ERROR);
+        e.printStackTrace();
         HexagonDBMSParser.ReInit(System.in);      }      catch (Error e)      {        System.out.println("Oops.");        System.out.println(e.getMessage());        break;      }    }  }
   
   public static void printMessage(int q)
@@ -36,6 +42,24 @@ public class HexagonDBMSParser{
       case PRINT_CREATE_TABLE:
       	System.out.println("\'CREATE TABLE\' requested");
       	break;
+      case PRINT_DROP_TABLE :
+      	System.out.println("\'DROP TABLE\' requested");
+      	break;
+      case PRINT_DESC:
+      	System.out.println("\'DESC\' requested");
+      	break; 
+      case PRINT_INSERT:
+      	System.out.println("\'INSERT\' requested");
+      	break; 
+      case PRINT_DELETE:
+      	System.out.println("\'DELETE\' requested");
+      	break; 
+      case PRINT_SELECT:
+      	System.out.println("\'SELECT\' requested");
+      	break; 
+      case PRINT_SHOW_TABLES:
+      	System.out.println("\'SHOW TABLES\' requested");
+      	break; 
     }
     System.out.print("HexagonDB_2012-11253> ");
   }}PARSER_END(HexagonDBMSParser)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* Keywords */
@@ -58,24 +82,42 @@ public class HexagonDBMSParser{
 | < VALUES : "values" >
 | < WHERE : "where" >
 | < AND : "and" >
+| < OR : "or" >
+| < IS : "is" >
+| < NULL : "null" >
+| < NOT : "not" >
 | < FROM : "from" >
 | < AS : "as" >
+| < ASTERISK : "*" >
 }
 
 TOKEN :
 {
-  < SEMICOLON : ";" >
+    < SEMICOLON : ";" >
 | < LEFT_PAREN : "(" >
 | < RIGHT_PAREN : ")" >
 | < COMMA : "," >
 | < UNDERSCORE : "_" >
+| < INT_VALUE : (< SIGN >)? (< DIGIT >)+>
 | < SIGN : "+" | "-" >
 | < DIGIT : [ "0"-"9" ] >
-| < DOT : "." >
-| < ALPHABET : [ "A"-"Z", "a"-"z" ] >
-| < SPACE : " " | "\t" >
+| < LEGAL_IDENTIFIER : < ALPHABET >(< ALPHABET > | < UNDERSCORE >)* >
+| < ALPHABET : [ "a"-"z", "A"-"Z" ] >
+| < SPACE : " "|"\t" >
 | < EQUAL : "=" >
+| < COMP_OP : < EQUAL >|"<"|">"|">="|"<="|"!=" >
+| < QUOTE : "\'" >
+| < PERIOD : "." >
+| < NON_QUOTE_SPECIAL_CHARACTERS : "!"|"@"|"#"|"$"|"%"|"^"|"&"|"*"|"("|")"|":"|";"|"<"|">"|"?"|"/" >
+| < DATE_HYPON : " - " >
+| < CHAR_STRING : < QUOTE >< NON_QUOTE_CHARACTER >< QUOTE >>
+| < NON_QUOTE_CHARACTER : < DIGIT >|< ALPHABET >|< NON_QUOTE_SPECIAL_CHARACTERS >|< SPACE >>
+| < NN : < DIGIT >< DIGIT >>
+| < NNNN : < NN >< NN >>
+| < DATE_VALUE : < NNNN >" - "< NN >" - "< NN >> 
 }
+
+
 
 void command() :
 {}
@@ -112,7 +154,7 @@ int query() :
   	|(
   	  dropTableQuery()
   	  {
-  	    q = PRINT_DELETE_TABLE;
+  	    q = PRINT_DROP_TABLE;
   	  }
   	)
   	|(
@@ -151,6 +193,8 @@ int query() :
   })
 }
 
+//create table account (account_number int not null,branch_name char(15),primary key(account_number));
+
 void createTableQuery() :
 {}
 {
@@ -158,6 +202,7 @@ void createTableQuery() :
   tableName()
   tableElementList()
 }
+
 void tableElementList() :
 {}
 {
@@ -169,6 +214,7 @@ void tableElementList() :
   )*
   < RIGHT_PAREN >
 }
+
 void tableElement() :
 {
 }
@@ -176,6 +222,7 @@ void tableElement() :
   columnDefinition()
 | tableConstraintDefinition()
 }
+
 void columnDefinition() :
 {}
 {
@@ -185,18 +232,21 @@ void columnDefinition() :
     < NOT_NULL >
   )?
 }
+
 void tableConstraintDefinition() :
 {}
 {
   primaryKeyConstraint()
 | referentialConstraint()
 }
+
 void primaryKeyConstraint() :
 {}
 {
   < PRIMARY_KEY >
   columnNameList()
 }
+
 void referentialConstraint() :
 {}
 {
@@ -206,6 +256,7 @@ void referentialConstraint() :
   tableName()
   columnNameList()
 }
+
 void columnNameList() :
 {}
 {
@@ -217,6 +268,7 @@ void columnNameList() :
   )*
   < RIGHT_PAREN >
 }
+
 void dataType() :
 {}
 {
@@ -224,42 +276,30 @@ void dataType() :
 | (
     < CHAR >
     < LEFT_PAREN >
-    intValue()
+    < INT_VALUE >
     < RIGHT_PAREN >
   )
 | < DATE >
 }
+
 void tableName() :
 {}
 {
-  legalIdentifier()
+  (    < LEGAL_IDENTIFIER >)*
 }
+
 void columnName() :
 {}
 {
-  legalIdentifier()
-}
-void intValue() :
-{}
-{
-  (
-    < SIGN >
-  )?
-  (
-    < DIGIT >
-  )+
-}
-
-void legalIdentifier() :
-{}
-{
-  < ALPHABET >
-  (
-    < ALPHABET > | < UNDERSCORE >
-  )*
+  (    < LEGAL_IDENTIFIER >)*
 }
 
 
+
+
+
+
+//drop table account;
 void dropTableQuery() :
 {
 }
@@ -270,6 +310,7 @@ void dropTableQuery() :
   )
 }
 
+//desc account;
 void descQuery() :
 {
 }
@@ -279,6 +320,163 @@ void descQuery() :
     tableName()  )
 }
 
+
+//select customer_name, borrower.loan_number, amount from borrower, loan where borrower.loan_number = loan.loan_number and branch_name = 'Perryridge';
+void selectQuery() :
+{
+}
+{
+  < SELECT >
+  selectList()
+  tableExpression()
+}
+
+void selectList() :
+{
+}
+{
+  (    ((selectedColumn()< COMMA >)*selectedColumn())
+  	| < ASTERISK > 
+  ) 
+}
+
+void selectedColumn() :
+{
+}
+{
+  (tableName()< PERIOD >)?columnName()(< AS >columnName())?
+}
+
+void tableExpression():
+{
+}
+{
+  fromClause()
+  (whereClause())?
+}
+
+void fromClause() :
+{
+}
+{
+  < FROM >
+  tableReferenceList()
+}
+
+void tableReferenceList() :
+{
+}
+{
+  referedTable()
+  (< COMMA >referedTable())*
+}
+
+
+void referedTable():
+{
+}
+{
+  tableName()(< AS >tableName())?
+}
+
+void whereClause():
+{
+}
+{
+  < WHERE >
+  booleanValueExpression()
+}
+
+void booleanValueExpression():
+{
+}
+{
+  booleanTerm()(< OR >booleanTerm())* 
+}
+
+void booleanTerm():
+{
+}
+{
+  booleanFactor()(< AND >booleanFactor())*
+}
+
+void booleanFactor():
+{
+}
+{
+  booleanTest()|< NOT >booleanTest()
+}
+
+void booleanTest():
+{
+}
+{
+  predicate()|parenthesizedBooleanExpression()  
+}
+
+void parenthesizedBooleanExpression():
+{
+}
+{
+  < LEFT_PAREN >
+  booleanValueExpression()
+  < RIGHT_PAREN >
+}
+void predicate():
+{
+}
+{
+  comparisonPredicate()|nullPredicate()
+}
+
+void comparisonPredicate():
+{
+}
+{
+  compOperand()
+  (< COMP_OP >|< EQUAL >)
+  compOperand()
+}
+	
+void compOperand():
+{
+}
+{
+ ((tableName()< PERIOD >)?columnName())|comparableValue()
+}
+
+void comparableValue():
+{
+}
+{
+  < INT_VALUE >|< CHAR_STRING >|< DATE_VALUE >
+}
+
+void nullPredicate():
+{
+}
+{
+  (tableName()< PERIOD >)?columnName()nullOperation()
+}
+void nullOperation():
+{
+}
+{
+  < IS >(< NOT >)?< NULL >
+}
+
+
+
+void showTablesQuery() :
+{
+}
+{
+  < SHOW_TABLES >
+}
+
+
+//insert into account values(9732, 12345);
 void insertQuery() :
 {
 }
@@ -286,124 +484,44 @@ void insertQuery() :
   (
     < INSERT_INTO >
     tableName()
-    columnNameList()
-    < VALUES >
-    valueList(/*?*/)     )
+    insertColumnsAndSource()   
+  )
 }
 
-void valueList() :
+
+void insertColumnsAndSource():
 {
 }
 {
+  (columnNameList())?valueList()
+}
+
+void valueList():
+{
+}
+{
+  < VALUES >
   < LEFT_PAREN >
-  valueType()
-  (    < COMMA >valueType()
-  )*
+  value()(< COMMA >value())*
   < RIGHT_PAREN >
 }
 
-void valueType() :
+void value():
 {
 }
 {
-	valueInt() | valueFloat() | valueString()
-}
-
-void valueInt() :
-{
-}
-{
-  (< SIGN >)?(< DIGIT >)*
-}
-
-void valueFloat() :
-{
-}
-{
-  valueInt()
-  < DOT >
-  valueInt()
-}
-
-void valueString() :
-{
-}
-{
-  (< ALPHABET >|< DIGIT >)
-  (< ALPHABET >|< UNDERSCORE >|< SPACE >|< DIGIT >)*
+  < NULL >|comparableValue()
 }
 
 
+//delete from account where branch_name = 'Perryridge';
 void deleteQuery() :
 {
 }
 {
   < DELETE_FROM >
   tableName()
-  whereClauseList()
-}
-
-void whereClauseList():
-{
-}
-{
-  < WHERE >
-  conditionDefinition()
-  (< AND >conditionDefinition())*
-}
-
-void conditionDefinition():
-{
-}
-{
-  equationLeft()
-  < EQUAL >
-  equationRight()
-}
-
-void equationLeft():
-{
-}
-{  
- (tableName()< DOT >)?columnName()
-}
-
-void equationRight():
-{
-}
-{
-  (valueType()|equationLeft()) 
-}
-
-void selectQuery() :
-{
-}
-{
-  < SELECT >
-  ((tableName()< DOT >)?columnName()(renameDef())?)
-  (
-    < COMMA >(tableName()< DOT >)?columnName()(renameDef())?  )*
-  < FROM >
-  (    (tableName()(renameDef())?)
-    (      < COMMA >(tableName()(renameDef())?)
-    )*
-  )
-  (whereClauseList())?
-}
-
-void renameDef() :
-{
-}
-{
-  < AS >
-  legalIdentifier()
-}
-
-void showTablesQuery() :
-{
-}
-{
-  < SHOW_TABLES >
+  (whereClause())?
 }
 
 
