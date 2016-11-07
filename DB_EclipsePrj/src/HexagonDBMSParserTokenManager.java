@@ -7,6 +7,7 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import java.io.*;
+import java.util.*;
 
 /** Token Manager. */
 public class HexagonDBMSParserTokenManager implements HexagonDBMSParserConstants

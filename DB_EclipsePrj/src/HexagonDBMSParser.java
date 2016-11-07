@@ -9,6 +9,55 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 
 import java.io.*;
+import java.util.*;
+
+
+class tableElement{
+  String[] element;
+
+  public tableElement(String[] ss) {
+    this.element = ss;
+  }
+
+  public void define(){
+    if(element[0].equals("primary")) {
+    }
+    else if(element[0].equals("foreign")) {
+    }
+    else {
+    }
+  }
+}
+
+
+
+class StringResponse{
+  public String syntaxError = "Syntax error";
+  public String DuplicateColumnDefError = "Create table has failed: column definition is duplicated";
+  public String DuplicatePrimaryKeyDefError = "Create table has failed: primary key definition is duplicated";
+  public String ReferenceTypeError = "Create table has failed: foreign key references wrong type";
+  public String ReferenceNonPrimaryKeyError = "Create table has failed: foreign key references non primary key columns non primary key column";
+  public String ReferenceColumnExistenceError = "Create table has failed: foreign key references non existing column";
+  public String ReferenceTableExistenceError = "Create table has failed: foreign key references non existing table";
+  public String TableExistenceError = "Create table has failed: table with the same name already exists";
+  public String ShowTablesNoTable = "There is no table";
+  public String NoSuchTable = "No such table";
+  public String CharLengthError = "Char length should be Char length should be over 0";
+
+  public String CreateTableSuccess(String tableName) {
+    return "'"+tableName+"'"+" table is created";
+  }
+  public String NonExistingColumnDefError(String colName) {
+    return "Create table has failed: '"+colName+"' does not exists in column definition";
+  }
+
+  public String DropSuccess(String tableName) {
+    return "'"+tableName+"' table is dropped";
+  }
+  public String DropReferencedTableError(String tableName) {
+    return "Drop table has failed: '"+tableName+"' is referenced by other table";
+  }
+}
 
 
 public class HexagonDBMSParser implements HexagonDBMSParserConstants {
@@ -22,15 +71,14 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
   public static final int PRINT_SELECT = 6;
   public static final int PRINT_SHOW_TABLES = 7;
 
+  public final StringResponse res = new StringResponse();
+
+  private static Environment hexaEnv = null;
+  private static Database hexaDB = null;
+
   public static void main(String args []) throws ParseException
   {
     HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
-
-        //
-        Environment hexaEnv = null;
-        Database hexaDB = null;
-
-
         EnvironmentConfig envConf = new EnvironmentConfig();
         envConf.setAllowCreate(true);
         hexaEnv = new Environment(new File("db/"),envConf);
@@ -40,40 +88,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
         dbConf.setSortedDuplicates(true);
         hexaDB = hexaEnv.openDatabase(null,"sampleDatabase",dbConf);
 
-        /*
-	//db insert
-	Cursor cur = null;
-	DatabaseEntry key;
-	DatabaseEntry data;
-
-	try {
-	  cur=hexaDB.openCursor(null,null);
-	  key= new DatabaseEntry("key".getBytes("UTF-8"));
-	  data= new DatabaseEntry("data".getBytes("UTF-8"));
-	  cur.put(key,data);
-	}
-	catch(DatabaseException de) {
-	}
-	catch(UnsupportedEncodingException e) {
-	  e.printStackTrace();
-	}
-
-
-	//db search
-	DatabaseEntry foundKey = new DatabaseEntry();
-	DatabaseEntry foundData = new DatabaseEntry();
-
-	cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
-	do {
-	  String keyString = new String(foundKey.getData(),"UTF-8");
-	  String dataString = new String(foundData.getData(),"UTF-8");
-	}while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
-	*/
-
-
-
-
-    while (true)
+        while (true)
     {
       System.out.print("HexagonDB_2012-11253> ");
       try
@@ -128,6 +143,71 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
         System.out.println("\u005c'SHOW TABLES\u005c' requested");
         break;
     }
+  }
+
+  public static void createTable(String name, ArrayList<tableElement > li) throws ParseException {
+    //printMessage(q);
+
+        //db insert
+        Cursor cur = null;
+        DatabaseEntry key;
+        DatabaseEntry data;
+
+        try {
+          cur=hexaDB.openCursor(null,null);
+          key= new DatabaseEntry("key".getBytes("UTF-8"));
+          data= new DatabaseEntry("data".getBytes("UTF-8"));
+          cur.put(key,data);
+        }
+        catch(DatabaseException de) {
+        }
+        catch(UnsupportedEncodingException e) {
+          e.printStackTrace();
+        }
+  }
+  public static void dropTable(String name) throws ParseException{
+
+
+        Cursor cur = null;
+        DatabaseEntry key;
+        DatabaseEntry data;
+    //db search
+        DatabaseEntry foundKey = new DatabaseEntry();
+        DatabaseEntry foundData = new DatabaseEntry();
+
+        cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+        do {
+          String keyString = new String(foundKey.getData(),"UTF-8");
+          String dataString = new String(foundData.getData(),"UTF-8");
+        }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+  }
+  public static void desc(String name) throws ParseException {
+        Cursor cur = null;
+        DatabaseEntry key;
+        DatabaseEntry data;
+    //db search
+        DatabaseEntry foundKey = new DatabaseEntry();
+        DatabaseEntry foundData = new DatabaseEntry();
+
+        cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+        do {
+          String keyString = new String(foundKey.getData(),"UTF-8");
+          String dataString = new String(foundData.getData(),"UTF-8");
+        }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+  }
+  public static void showTables() throws ParseException {
+        Cursor cur = null;
+        DatabaseEntry key;
+        DatabaseEntry data;
+    //db search
+        DatabaseEntry foundKey = new DatabaseEntry();
+        DatabaseEntry foundData = new DatabaseEntry();
+
+        cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+        do {
+          String keyString = new String(foundKey.getData(),"UTF-8");
+          String dataString = new String(foundData.getData(),"UTF-8");
+        }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
   }
 
   static final public boolean command() throws ParseException {
@@ -193,14 +273,21 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
 
 //create table account (account_number int not null,branch_name char(15),primary key(account_number));
   static final public void createTableQuery() throws ParseException {
+  String name;
+  ArrayList<tableElement > li;
     jj_consume_token(CREATE_TABLE);
-    tableName();
-    tableElementList();
+    name = tableName();
+    li = tableElementList();
+    createTable(name,li);
   }
 
-  static final public void tableElementList() throws ParseException {
+  static final public ArrayList<tableElement > tableElementList() throws ParseException {
+  ArrayList<tableElement > li;
+  tableElement t;
+    li = new ArrayList<tableElement >();
     jj_consume_token(LEFT_PAREN);
-    tableElement();
+    t = tableElement();
+    li.add(t);
     label_2:
     while (true) {
       if (jj_2_11(3)) {
@@ -209,59 +296,119 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
         break label_2;
       }
       jj_consume_token(COMMA);
-      tableElement();
+      t = tableElement();
+      li.add(t);
     }
     jj_consume_token(RIGHT_PAREN);
+        {if (true) return li;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void tableElement() throws ParseException {
+  static final public tableElement tableElement() throws ParseException {
+  String[] ss;
     if (jj_2_12(3)) {
-      columnDefinition();
+      ss = columnDefinition();
     } else if (jj_2_13(3)) {
-      tableConstraintDefinition();
+      ss = tableConstraintDefinition();
+          {if (true) return new tableElement(ss);}
     } else {
       jj_consume_token(-1);
       throw new ParseException();
     }
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void columnDefinition() throws ParseException {
-    columnName();
-    dataType();
+  static final public String[] columnDefinition() throws ParseException {
+  String[] ret;
+  String s;
+  Token[] ss;
+  boolean b;
+  Token t;
+    t=null;
+    b = false;
+    ret = new String[4];
+    s = columnName();
+    ss = dataType();
     if (jj_2_14(3)) {
-      jj_consume_token(NOT_NULL);
+      t = jj_consume_token(NOT_NULL);
     } else {
       ;
     }
+        if(t != null)
+                b = true;
+        ret[0] = s;
+        ret[1] = ss[0].image;
+        if(ss[1]!=null)
+                ret[2] = ss[1].image;
+        else
+                ret[2] = "";
+        if(b) {
+            ret[3] = "not null";
+        }
+        else ret[3] = "null";
+
+        {if (true) return ret;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void tableConstraintDefinition() throws ParseException {
+  static final public String[] tableConstraintDefinition() throws ParseException {
+  String[] ret;
     if (jj_2_15(3)) {
-      primaryKeyConstraint();
+      ret = primaryKeyConstraint();
     } else if (jj_2_16(3)) {
-      referentialConstraint();
+      ret = referentialConstraint();
+  {if (true) return ret;}
     } else {
       jj_consume_token(-1);
       throw new ParseException();
     }
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void primaryKeyConstraint() throws ParseException {
+  static final public String[] primaryKeyConstraint() throws ParseException {
+  String[] ret;
+  String[] s;
     jj_consume_token(PRIMARY_KEY);
-    columnNameList();
+    s = columnNameList();
+    ret = new String[s.length+1];
+    ret[0] = "primary";
+    for(int i=0;i<s.length;i++) {
+      ret[i+1] = s[i];
+    }
+    {if (true) return ret;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void referentialConstraint() throws ParseException {
+  static final public String[] referentialConstraint() throws ParseException {
+  String[] ret;
+  String[] refNameList;
+  String[] realNameList;
+  String tName;
     jj_consume_token(FOREIGN_KEY);
-    columnNameList();
+    refNameList = columnNameList();
     jj_consume_token(REFERENCES);
-    tableName();
-    columnNameList();
+    tName = tableName();
+    realNameList = columnNameList();
+    if(refNameList.length!=realNameList.length) {
+    }
+    ret = new String[(refNameList.length+1)*2];
+    ret[0] = "foreign";
+    ret[1] = tName;
+    for(int i=1;i<=refNameList.length;i++){
+      ret[2*i] = refNameList[i-1];
+      ret[2*i+1] = realNameList[i-1];
+    }
+    {if (true) return ret;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void columnNameList() throws ParseException {
+  static final public String[] columnNameList() throws ParseException {
+  ArrayList<String > ret;
+  String s;
+    ret = new ArrayList<String >();
     jj_consume_token(LEFT_PAREN);
-    columnName();
+    s = columnName();
+    ret.add(s);
     label_3:
     while (true) {
       if (jj_2_17(3)) {
@@ -270,28 +417,40 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
         break label_3;
       }
       jj_consume_token(COMMA);
-      columnName();
+      s = columnName();
+      ret.add(s);
     }
     jj_consume_token(RIGHT_PAREN);
+    {if (true) return (String[])ret.toArray(new String[0]);}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void dataType() throws ParseException {
+  static final public Token[] dataType() throws ParseException {
+  Token[] ret;
+    ret = new Token[2];
     if (jj_2_18(3)) {
-      jj_consume_token(INT);
+      ret[0] = jj_consume_token(INT);
+    ret[1] = null;
     } else if (jj_2_19(3)) {
-      jj_consume_token(CHAR);
+      ret[0] = jj_consume_token(CHAR);
       jj_consume_token(LEFT_PAREN);
-      jj_consume_token(INT_VALUE);
+      ret[1] = jj_consume_token(INT_VALUE);
       jj_consume_token(RIGHT_PAREN);
     } else if (jj_2_20(3)) {
-      jj_consume_token(DATE);
+      ret[0] = jj_consume_token(DATE);
+          ret[1] = null;
     } else {
       jj_consume_token(-1);
       throw new ParseException();
     }
+   {if (true) return ret;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void tableName() throws ParseException {
+  static final public String tableName() throws ParseException {
+  String s;
+  Token t;
+    s = "";
     label_4:
     while (true) {
       if (jj_2_21(3)) {
@@ -299,11 +458,17 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       } else {
         break label_4;
       }
-      jj_consume_token(LEGAL_IDENTIFIER);
+      t = jj_consume_token(LEGAL_IDENTIFIER);
+      s+=t.image;
     }
+    {if (true) return s;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void columnName() throws ParseException {
+  static final public String columnName() throws ParseException {
+  String s;
+  Token t;
+    s = "";
     label_5:
     while (true) {
       if (jj_2_22(3)) {
@@ -311,20 +476,27 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       } else {
         break label_5;
       }
-      jj_consume_token(LEGAL_IDENTIFIER);
+      t = jj_consume_token(LEGAL_IDENTIFIER);
+      s+=t.image;
     }
+    {if (true) return s;}
+    throw new Error("Missing return statement in function");
   }
 
 //drop table account;
   static final public void dropTableQuery() throws ParseException {
+  String name;
     jj_consume_token(DROP_TABLE);
-    tableName();
+    name = tableName();
+    dropTable(name);
   }
 
 //desc account;
   static final public void descQuery() throws ParseException {
+  String name;
     jj_consume_token(DESC);
-    tableName();
+    name = tableName();
+    desc(name);
   }
 
 //select customer_name, borrower.loan_number, amount from borrower, loan where borrower.loan_number = loan.loan_number and branch_name = 'Perryridge';
@@ -534,6 +706,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
 
   static final public void showTablesQuery() throws ParseException {
     jj_consume_token(SHOW_TABLES);
+    showTables();
   }
 
 //insert into account values(9732, 12345);
@@ -934,12 +1107,8 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     finally { jj_save(48, xla); }
   }
 
-  static private boolean jj_3R_46() {
-    if (jj_scan_token(IS)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_44()) jj_scanpos = xsp;
-    if (jj_scan_token(NULL)) return true;
+  static private boolean jj_3_34() {
+    if (jj_3R_34()) return true;
     return false;
   }
 
@@ -950,7 +1119,30 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3R_43() {
+  static private boolean jj_3R_34() {
+    if (jj_scan_token(LEFT_PAREN)) return true;
+    if (jj_3R_45()) return true;
+    if (jj_scan_token(RIGHT_PAREN)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_18() {
+    if (jj_scan_token(INT)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_32() {
+    if (jj_scan_token(NOT)) return true;
+    if (jj_3R_32()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_10() {
+    if (jj_3R_19()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_44() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_18()) {
@@ -963,204 +1155,18 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_18() {
-    if (jj_scan_token(INT)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_43() {
-    if (jj_3R_26()) return true;
-    if (jj_scan_token(PERIOD)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_35() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_43()) jj_scanpos = xsp;
-    if (jj_3R_24()) return true;
-    if (jj_3R_46()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_17() {
-    if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_24()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_38() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_40()) {
-    jj_scanpos = xsp;
-    if (jj_3_41()) {
-    jj_scanpos = xsp;
-    if (jj_3_42()) return true;
-    }
-    }
-    return false;
-  }
-
-  static private boolean jj_3_40() {
-    if (jj_scan_token(INT_VALUE)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_36() {
-    if (jj_3R_35()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_38() {
-    if (jj_scan_token(EQUAL)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_36() {
-    if (jj_scan_token(LEFT_PAREN)) return true;
-    if (jj_3R_24()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_17()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_scan_token(RIGHT_PAREN)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_39() {
-    if (jj_3R_26()) return true;
-    if (jj_scan_token(PERIOD)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_50() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_39()) jj_scanpos = xsp;
-    if (jj_3R_24()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_45() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_50()) {
-    jj_scanpos = xsp;
-    if (jj_3R_51()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_23() {
-    if (jj_scan_token(FOREIGN_KEY)) return true;
-    if (jj_3R_36()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_37() {
-    if (jj_scan_token(COMP_OP)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_34() {
-    if (jj_3R_45()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_37()) {
-    jj_scanpos = xsp;
-    if (jj_3_38()) return true;
-    }
-    if (jj_3R_45()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_22() {
-    if (jj_scan_token(PRIMARY_KEY)) return true;
-    if (jj_3R_36()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_35() {
-    if (jj_3R_34()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_32() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_35()) {
-    jj_scanpos = xsp;
-    if (jj_3_36()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3_16() {
-    if (jj_3R_23()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_34() {
-    if (jj_3R_33()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_15() {
-    if (jj_3R_22()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_21() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_15()) {
-    jj_scanpos = xsp;
-    if (jj_3_16()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_33() {
-    if (jj_scan_token(LEFT_PAREN)) return true;
-    if (jj_3R_44()) return true;
-    if (jj_scan_token(RIGHT_PAREN)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_32() {
-    if (jj_scan_token(NOT)) return true;
+  static private boolean jj_3_30() {
+    if (jj_scan_token(AND)) return true;
     if (jj_3R_31()) return true;
     return false;
   }
 
-  static private boolean jj_3_14() {
-    if (jj_scan_token(NOT_NULL)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_30() {
-    if (jj_scan_token(AND)) return true;
-    if (jj_3R_30()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_20() {
-    if (jj_3R_24()) return true;
-    if (jj_3R_43()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_14()) jj_scanpos = xsp;
-    return false;
-  }
-
   static private boolean jj_3_33() {
-    if (jj_3R_32()) return true;
+    if (jj_3R_33()) return true;
     return false;
   }
 
-  static private boolean jj_3R_31() {
+  static private boolean jj_3R_32() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_33()) {
@@ -1170,38 +1176,23 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_13() {
-    if (jj_3R_21()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_12() {
-    if (jj_3R_20()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_19() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_12()) {
-    jj_scanpos = xsp;
-    if (jj_3_13()) return true;
-    }
+  static private boolean jj_3_9() {
+    if (jj_3R_18()) return true;
     return false;
   }
 
   static private boolean jj_3_31() {
-    if (jj_3R_31()) return true;
+    if (jj_3R_32()) return true;
     return false;
   }
 
   static private boolean jj_3_29() {
     if (jj_scan_token(OR)) return true;
-    if (jj_3R_29()) return true;
+    if (jj_3R_30()) return true;
     return false;
   }
 
-  static private boolean jj_3R_30() {
+  static private boolean jj_3R_31() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_31()) {
@@ -1211,105 +1202,14 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_11() {
-    if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_19()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_29() {
-    if (jj_3R_30()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_30()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_39() {
-    if (jj_scan_token(LEFT_PAREN)) return true;
-    if (jj_3R_19()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_44() {
-    if (jj_3R_29()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_29()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  static private boolean jj_3_28() {
-    if (jj_scan_token(AS)) return true;
-    if (jj_3R_26()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_13() {
-    if (jj_scan_token(CREATE_TABLE)) return true;
-    if (jj_3R_26()) return true;
-    if (jj_3R_39()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_27() {
-    if (jj_scan_token(WHERE)) return true;
-    if (jj_3R_44()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_25() {
-    if (jj_scan_token(AS)) return true;
-    if (jj_3R_24()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_28() {
-    if (jj_3R_26()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_28()) jj_scanpos = xsp;
-    return false;
-  }
-
-  static private boolean jj_3_10() {
-    if (jj_scan_token(15)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_9() {
-    if (jj_3R_18()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_27() {
-    if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_28()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_52() {
-    if (jj_3R_28()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_27()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
   static private boolean jj_3_8() {
     if (jj_3R_17()) return true;
     return false;
   }
 
-  static private boolean jj_3R_49() {
-    if (jj_scan_token(FROM)) return true;
-    if (jj_3R_52()) return true;
+  static private boolean jj_3_17() {
+    if (jj_scan_token(COMMA)) return true;
+    if (jj_3R_25()) return true;
     return false;
   }
 
@@ -1318,16 +1218,13 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_26() {
-    if (jj_3R_27()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_42() {
-    if (jj_3R_49()) return true;
+  static private boolean jj_3R_30() {
+    if (jj_3R_31()) return true;
     Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_26()) jj_scanpos = xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_30()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
@@ -1336,50 +1233,56 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
+  static private boolean jj_3R_45() {
+    if (jj_3R_30()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_29()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_37() {
+    if (jj_scan_token(LEFT_PAREN)) return true;
+    if (jj_3R_25()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_17()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_scan_token(RIGHT_PAREN)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_28() {
+    if (jj_scan_token(AS)) return true;
+    if (jj_3R_27()) return true;
+    return false;
+  }
+
   static private boolean jj_3_5() {
     if (jj_3R_14()) return true;
     return false;
   }
 
-  static private boolean jj_3_24() {
-    if (jj_3R_26()) return true;
-    if (jj_scan_token(PERIOD)) return true;
+  static private boolean jj_3R_28() {
+    if (jj_scan_token(WHERE)) return true;
+    if (jj_3R_45()) return true;
     return false;
   }
 
-  static private boolean jj_3R_25() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_24()) jj_scanpos = xsp;
-    if (jj_3R_24()) return true;
-    xsp = jj_scanpos;
-    if (jj_3_25()) jj_scanpos = xsp;
-    return false;
-  }
-
-  static private boolean jj_3_23() {
-    if (jj_3R_25()) return true;
-    if (jj_scan_token(COMMA)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_48() {
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_23()) { jj_scanpos = xsp; break; }
-    }
+  static private boolean jj_3_25() {
+    if (jj_scan_token(AS)) return true;
     if (jj_3R_25()) return true;
     return false;
   }
 
-  static private boolean jj_3R_41() {
+  static private boolean jj_3R_29() {
+    if (jj_3R_27()) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_48()) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(29)) return true;
-    }
+    if (jj_3_28()) jj_scanpos = xsp;
     return false;
   }
 
@@ -1413,29 +1316,25 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_49() {
-    if (jj_3R_27()) return true;
+  static private boolean jj_3_27() {
+    if (jj_scan_token(COMMA)) return true;
+    if (jj_3R_29()) return true;
     return false;
   }
 
-  static private boolean jj_3_48() {
-    if (jj_3R_38()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_17() {
-    if (jj_scan_token(DELETE_FROM)) return true;
-    if (jj_3R_26()) return true;
+  static private boolean jj_3R_53() {
+    if (jj_3R_29()) return true;
     Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_49()) jj_scanpos = xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_27()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
-  static private boolean jj_3R_18() {
-    if (jj_scan_token(SELECT)) return true;
-    if (jj_3R_41()) return true;
-    if (jj_3R_42()) return true;
+  static private boolean jj_3R_24() {
+    if (jj_scan_token(FOREIGN_KEY)) return true;
+    if (jj_3R_37()) return true;
     return false;
   }
 
@@ -1455,7 +1354,131 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3R_37() {
+  static private boolean jj_3R_50() {
+    if (jj_scan_token(FROM)) return true;
+    if (jj_3R_53()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_26() {
+    if (jj_3R_28()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_2() {
+    if (jj_scan_token(EXIT)) return true;
+    if (jj_scan_token(SEMICOLON)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_43() {
+    if (jj_3R_50()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_26()) jj_scanpos = xsp;
+    return false;
+  }
+
+  static private boolean jj_3_1() {
+    if (jj_3R_11()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_24() {
+    if (jj_3R_27()) return true;
+    if (jj_scan_token(PERIOD)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_26() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_24()) jj_scanpos = xsp;
+    if (jj_3R_25()) return true;
+    xsp = jj_scanpos;
+    if (jj_3_25()) jj_scanpos = xsp;
+    return false;
+  }
+
+  static private boolean jj_3R_23() {
+    if (jj_scan_token(PRIMARY_KEY)) return true;
+    if (jj_3R_37()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_23() {
+    if (jj_3R_26()) return true;
+    if (jj_scan_token(COMMA)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_49() {
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_23()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_3R_26()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_42() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_49()) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(29)) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3_49() {
+    if (jj_3R_28()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_48() {
+    if (jj_3R_39()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_17() {
+    if (jj_scan_token(DELETE_FROM)) return true;
+    if (jj_3R_27()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_49()) jj_scanpos = xsp;
+    return false;
+  }
+
+  static private boolean jj_3_16() {
+    if (jj_3R_24()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_15() {
+    if (jj_3R_23()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_22() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_15()) {
+    jj_scanpos = xsp;
+    if (jj_3_16()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_18() {
+    if (jj_scan_token(SELECT)) return true;
+    if (jj_3R_42()) return true;
+    if (jj_3R_43()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_38() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_47()) {
@@ -1467,7 +1490,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
 
   static private boolean jj_3_46() {
     if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_37()) return true;
+    if (jj_3R_38()) return true;
     return false;
   }
 
@@ -1476,62 +1499,60 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3R_15() {
-    if (jj_scan_token(DESC)) return true;
-    if (jj_3R_26()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_2() {
-    if (jj_scan_token(EXIT)) return true;
-    if (jj_scan_token(SEMICOLON)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_47() {
+  static private boolean jj_3R_48() {
     if (jj_scan_token(VALUES)) return true;
     if (jj_scan_token(LEFT_PAREN)) return true;
     return false;
   }
 
-  static private boolean jj_3_1() {
-    if (jj_3R_11()) return true;
+  static private boolean jj_3R_15() {
+    if (jj_scan_token(DESC)) return true;
+    if (jj_3R_27()) return true;
     return false;
   }
 
   static private boolean jj_3_45() {
-    if (jj_3R_36()) return true;
+    if (jj_3R_37()) return true;
     return false;
   }
 
-  static private boolean jj_3R_40() {
+  static private boolean jj_3R_41() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_45()) jj_scanpos = xsp;
-    if (jj_3R_47()) return true;
+    if (jj_3R_48()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_14() {
+    if (jj_scan_token(NOT_NULL)) return true;
     return false;
   }
 
   static private boolean jj_3R_14() {
     if (jj_scan_token(DROP_TABLE)) return true;
-    if (jj_3R_26()) return true;
+    if (jj_3R_27()) return true;
     return false;
   }
 
-  static private boolean jj_3_22() {
-    if (jj_scan_token(LEGAL_IDENTIFIER)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_51() {
-    if (jj_3R_38()) return true;
+  static private boolean jj_3R_21() {
+    if (jj_3R_25()) return true;
+    if (jj_3R_44()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_14()) jj_scanpos = xsp;
     return false;
   }
 
   static private boolean jj_3R_16() {
     if (jj_scan_token(INSERT_INTO)) return true;
-    if (jj_3R_26()) return true;
-    if (jj_3R_40()) return true;
+    if (jj_3R_27()) return true;
+    if (jj_3R_41()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_52() {
+    if (jj_3R_39()) return true;
     return false;
   }
 
@@ -1540,26 +1561,18 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3R_24() {
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_22()) { jj_scanpos = xsp; break; }
-    }
+  static private boolean jj_3R_19() {
+    if (jj_scan_token(SHOW_TABLES)) return true;
     return false;
   }
 
-  static private boolean jj_3_21() {
+  static private boolean jj_3_22() {
     if (jj_scan_token(LEGAL_IDENTIFIER)) return true;
     return false;
   }
 
-  static private boolean jj_3R_26() {
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_21()) { jj_scanpos = xsp; break; }
-    }
+  static private boolean jj_3_13() {
+    if (jj_3R_22()) return true;
     return false;
   }
 
@@ -1568,13 +1581,178 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_20() {
-    if (jj_scan_token(DATE)) return true;
+  static private boolean jj_3_12() {
+    if (jj_3R_21()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_20() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_12()) {
+    jj_scanpos = xsp;
+    if (jj_3_13()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_25() {
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_22()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
   static private boolean jj_3_41() {
     if (jj_scan_token(CHAR_STRING)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_47() {
+    if (jj_scan_token(IS)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_44()) jj_scanpos = xsp;
+    if (jj_scan_token(NULL)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_43() {
+    if (jj_3R_27()) return true;
+    if (jj_scan_token(PERIOD)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_36() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_43()) jj_scanpos = xsp;
+    if (jj_3R_25()) return true;
+    if (jj_3R_47()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_11() {
+    if (jj_scan_token(COMMA)) return true;
+    if (jj_3R_20()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_21() {
+    if (jj_scan_token(LEGAL_IDENTIFIER)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_39() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_40()) {
+    jj_scanpos = xsp;
+    if (jj_3_41()) {
+    jj_scanpos = xsp;
+    if (jj_3_42()) return true;
+    }
+    }
+    return false;
+  }
+
+  static private boolean jj_3_40() {
+    if (jj_scan_token(INT_VALUE)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_36() {
+    if (jj_3R_36()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_38() {
+    if (jj_scan_token(EQUAL)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_27() {
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_21()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  static private boolean jj_3_39() {
+    if (jj_3R_27()) return true;
+    if (jj_scan_token(PERIOD)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_40() {
+    if (jj_scan_token(LEFT_PAREN)) return true;
+    if (jj_3R_20()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_51() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_39()) jj_scanpos = xsp;
+    if (jj_3R_25()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_46() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_51()) {
+    jj_scanpos = xsp;
+    if (jj_3R_52()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3_37() {
+    if (jj_scan_token(COMP_OP)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_35() {
+    if (jj_3R_46()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_37()) {
+    jj_scanpos = xsp;
+    if (jj_3_38()) return true;
+    }
+    if (jj_3R_46()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_13() {
+    if (jj_scan_token(CREATE_TABLE)) return true;
+    if (jj_3R_27()) return true;
+    if (jj_3R_40()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_20() {
+    if (jj_scan_token(DATE)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_33() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_35()) {
+    jj_scanpos = xsp;
+    if (jj_3_36()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3_35() {
+    if (jj_3R_35()) return true;
     return false;
   }
 

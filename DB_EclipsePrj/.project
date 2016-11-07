@@ -22,6 +22,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>DBPrj1_1.jj</name>
+			<type>1</type>
+			<locationURI>PARENT-2-PROJECT_LOC/previous%20prj/DBProject1/src/DBPrj1_1.jj</locationURI>
+		</link>
+		<link>
 			<name>SimpleDBMSGrammar.jj</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/SimpleDBMSGrammar.jj</locationURI>

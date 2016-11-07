@@ -19,6 +19,55 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 
 import java.io.*;
+import java.util.*;
+
+
+class tableElement{
+  String[] element;
+
+  public tableElement(String[] ss) {
+    this.element = ss;
+  }
+
+  public void define(){
+    if(element[0].equals("primary")) {
+    }
+    else if(element[0].equals("foreign")) {
+    }
+    else {
+    }
+  }
+}
+
+
+
+class StringResponse{
+  public String syntaxError = "Syntax error";
+  public String DuplicateColumnDefError = "Create table has failed: column definition is duplicated";
+  public String DuplicatePrimaryKeyDefError = "Create table has failed: primary key definition is duplicated";
+  public String ReferenceTypeError = "Create table has failed: foreign key references wrong type";
+  public String ReferenceNonPrimaryKeyError = "Create table has failed: foreign key references non primary key columns non primary key column";
+  public String ReferenceColumnExistenceError = "Create table has failed: foreign key references non existing column";
+  public String ReferenceTableExistenceError = "Create table has failed: foreign key references non existing table";
+  public String TableExistenceError = "Create table has failed: table with the same name already exists";
+  public String ShowTablesNoTable = "There is no table";
+  public String NoSuchTable = "No such table";
+  public String CharLengthError = "Char length should be Char length should be over 0";
+    
+  public String CreateTableSuccess(String tableName) {
+    return "'"+tableName+"'"+" table is created";
+  }
+  public String NonExistingColumnDefError(String colName) {
+    return "Create table has failed: '"+colName+"' does not exists in column definition";
+  }
+
+  public String DropSuccess(String tableName) {
+    return "'"+tableName+"' table is dropped";
+  }
+  public String DropReferencedTableError(String tableName) {
+    return "Drop table has failed: '"+tableName+"' is referenced by other table";
+  }
+}
 
 
 public class HexagonDBMSParser{
@@ -31,14 +80,13 @@ public class HexagonDBMSParser{
   public static final int PRINT_DELETE = 5;
   public static final int PRINT_SELECT = 6;
   public static final int PRINT_SHOW_TABLES = 7;
+
+  public final StringResponse res = new StringResponse();
+
+  private static Environment hexaEnv = null;
+  private static Database hexaDB = null; 
     public static void main(String args []) throws ParseException  {
     HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
-    
-	//
-	Environment hexaEnv = null;
-	Database hexaDB = null;
-
-
 	EnvironmentConfig envConf = new EnvironmentConfig();
 	envConf.setAllowCreate(true);
 	hexaEnv = new Environment(new File("db/"),envConf);
@@ -48,39 +96,7 @@ public class HexagonDBMSParser{
 	dbConf.setSortedDuplicates(true);
 	hexaDB = hexaEnv.openDatabase(null,"sampleDatabase",dbConf);
 
-	/*
-	//db insert
-	Cursor cur = null;
-	DatabaseEntry key;
-	DatabaseEntry data;
-
-	try {
-	  cur=hexaDB.openCursor(null,null);
-	  key= new DatabaseEntry("key".getBytes("UTF-8"));
-	  data= new DatabaseEntry("data".getBytes("UTF-8"));
-	  cur.put(key,data);
-	}
-	catch(DatabaseException de) {
-	}
-	catch(UnsupportedEncodingException e) {
-	  e.printStackTrace();
-	}
-
-
-	//db search
-	DatabaseEntry foundKey = new DatabaseEntry();
-	DatabaseEntry foundData = new DatabaseEntry();
-
-	cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
-	do {
-	  String keyString = new String(foundKey.getData(),"UTF-8");
-	  String dataString = new String(foundData.getData(),"UTF-8");
-	}while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
-	*/
-
-
-
-       while (true)
+	while (true)
     {
       System.out.print("HexagonDB_2012-11253> ");      try
       {
@@ -122,6 +138,71 @@ public class HexagonDBMSParser{
       	System.out.println("\'SHOW TABLES\' requested");
       	break; 
     }
+  }
+
+  public static void createTable(String name, ArrayList<tableElement > li) throws ParseException {
+    //printMessage(q);
+    
+	//db insert
+	Cursor cur = null;
+	DatabaseEntry key;
+	DatabaseEntry data;
+
+	try {
+	  cur=hexaDB.openCursor(null,null);
+	  key= new DatabaseEntry("key".getBytes("UTF-8"));
+	  data= new DatabaseEntry("data".getBytes("UTF-8"));
+	  cur.put(key,data);
+	}
+	catch(DatabaseException de) {
+	}
+	catch(UnsupportedEncodingException e) {
+	  e.printStackTrace();
+	}
+  }
+  public static void dropTable(String name) throws ParseException{
+
+    
+	Cursor cur = null;
+	DatabaseEntry key;
+	DatabaseEntry data;
+    //db search
+	DatabaseEntry foundKey = new DatabaseEntry();
+	DatabaseEntry foundData = new DatabaseEntry();
+
+	cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+	do {
+	  String keyString = new String(foundKey.getData(),"UTF-8");
+	  String dataString = new String(foundData.getData(),"UTF-8");
+	}while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+  }
+  public static void desc(String name) throws ParseException {
+	Cursor cur = null;
+	DatabaseEntry key;
+	DatabaseEntry data;
+    //db search
+	DatabaseEntry foundKey = new DatabaseEntry();
+	DatabaseEntry foundData = new DatabaseEntry();
+
+	cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+	do {
+	  String keyString = new String(foundKey.getData(),"UTF-8");
+	  String dataString = new String(foundData.getData(),"UTF-8");
+	}while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+  }
+  public static void showTables() throws ParseException {
+	Cursor cur = null;
+	DatabaseEntry key;
+	DatabaseEntry data;
+    //db search
+	DatabaseEntry foundKey = new DatabaseEntry();
+	DatabaseEntry foundData = new DatabaseEntry();
+
+	cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+	do {
+	  String keyString = new String(foundKey.getData(),"UTF-8");
+	  String dataString = new String(foundData.getData(),"UTF-8");
+	}while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
   }}PARSER_END(HexagonDBMSParser)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* Keywords */
 {
   < EXIT : "exit" >
@@ -210,9 +291,9 @@ int query() :
 {
   (    (
       createTableQuery()
-   		{
-      	q = PRINT_CREATE_TABLE;
-    	}
+      {
+        q = PRINT_CREATE_TABLE;
+	  }
     )
   	|(
   	  dropTableQuery()
@@ -259,102 +340,250 @@ int query() :
 //create table account (account_number int not null,branch_name char(15),primary key(account_number));
 
 void createTableQuery() :
-{}
+{
+  String name;
+  ArrayList<tableElement > li;
+}
 {
   < CREATE_TABLE >
-  tableName()
-  tableElementList()
+  name = tableName()
+  li = tableElementList()
+  {
+    createTable(name,li);
+  }
 }
 
-void tableElementList() :
-{}
+ArrayList<tableElement > tableElementList() :
 {
+  ArrayList<tableElement > li;
+  tableElement t;
+}
+{
+  {
+    li = new ArrayList<tableElement >();
+  }
   < LEFT_PAREN >
-  tableElement()
+  t=tableElement()
+  {
+    li.add(t);
+  }
   (
     < COMMA >
-    tableElement()
+    t=tableElement()
+    {
+      li.add(t);
+    }
   )*
   < RIGHT_PAREN >
+  {
+  	return li;
+  }
 }
 
-void tableElement() :
+tableElement tableElement() :
 {
+  String[] ss;
 }
 {
-  columnDefinition()
-| tableConstraintDefinition()
+  ss=columnDefinition()
+| ss=tableConstraintDefinition()
+	{
+	  return new tableElement(ss);
+	}
+
 }
 
-void columnDefinition() :
-{}
+String[] columnDefinition() :
 {
-  columnName()
-  dataType()
+  String[] ret;
+  String s;
+  Token[] ss;
+  boolean b;
+  Token t;
+}
+{
+  {
+    t=null;
+    b = false;
+    ret = new String[4]; 
+  }
+  s=columnName()
+  ss=dataType()
   (
-    < NOT_NULL >
+    t=< NOT_NULL >
   )?
+  {
+    
+  	if(t != null)
+  		b = true;
+  	ret[0] = s;
+  	ret[1] = ss[0].image;
+  	if(ss[1]!=null)
+  		ret[2] = ss[1].image;
+  	else
+  		ret[2] = "";
+  	if(b) {
+	    ret[3] = "not null"; 
+  	}
+  	else ret[3] = "null";
+
+  	return ret;
+  }
 }
 
-void tableConstraintDefinition() :
-{}
+String[] tableConstraintDefinition() :
 {
-  primaryKeyConstraint()
-| referentialConstraint()
+  String[] ret;
+}
+{
+  ret = primaryKeyConstraint()
+| ret = referentialConstraint()
+{
+  return ret;
+}
 }
 
-void primaryKeyConstraint() :
-{}
+String[] primaryKeyConstraint() :
+{
+  String[] ret;
+  String[] s;
+}
 {
   < PRIMARY_KEY >
-  columnNameList()
+  s = columnNameList()
+  {
+    ret = new String[s.length+1];
+    ret[0] = "primary";
+    for(int i=0;i<s.length;i++) {
+      ret[i+1] = s[i];
+    }
+    return ret;
+  }
 }
 
-void referentialConstraint() :
-{}
+String[] referentialConstraint() :
+{
+  String[] ret;
+  String[] refNameList;
+  String[] realNameList;
+  String tName;
+ // String 
+}
 {
   < FOREIGN_KEY >
-  columnNameList()
+  refNameList = columnNameList()
   < REFERENCES >
-  tableName()
-  columnNameList()
+  tName = tableName()
+  realNameList = columnNameList()
+  {
+    if(refNameList.length!=realNameList.length) {
+    }
+    ret = new String[(refNameList.length+1)*2];
+    ret[0] = "foreign";
+    ret[1] = tName;
+    for(int i=1;i<=refNameList.length;i++){
+      ret[2*i] = refNameList[i-1];
+      ret[2*i+1] = realNameList[i-1];
+    }
+    return ret;
+  }
 }
 
-void columnNameList() :
-{}
+String[] columnNameList() :
 {
+  ArrayList<String > ret;
+  String s;
+}
+{
+  {
+    ret = new ArrayList<String >();
+  }
   < LEFT_PAREN >
-  columnName()
+  s=columnName()
+  {
+    ret.add(s);
+  }
   (
     < COMMA >
-    columnName()
+    s=columnName()
+    {
+      ret.add(s);
+    }
   )*
   < RIGHT_PAREN >
+  {
+    return (String[])ret.toArray(new String[0]);
+  }
 }
 
-void dataType() :
-{}
+Token[] dataType() :
 {
-  < INT >
+  Token[] ret;
+}
+{
+  {
+    ret = new Token[2];
+  }
+ (
+  
+  ret[0]=< INT >
+  {
+    ret[1] = null;
+  }
 | (
-    < CHAR >
+    ret[0]=< CHAR >
     < LEFT_PAREN >
-    < INT_VALUE >
+    ret[1]=< INT_VALUE >
     < RIGHT_PAREN >
   )
-| < DATE >
+| ret[0]=< DATE >
+	{
+	  ret[1] = null;
+	}
+ )
+ {
+   return ret;
+ }
 }
 
-void tableName() :
-{}
+String tableName() :
 {
-  (    < LEGAL_IDENTIFIER >)*
+  String s;
+  Token t;
+}
+{
+  {
+    s = "";
+  }
+  (
+    t=< LEGAL_IDENTIFIER >
+    {
+      s+=t.image;
+    }
+  )*
+  {
+    return s;
+  }
 }
 
-void columnName() :
-{}
+String columnName() :
 {
-  (    < LEGAL_IDENTIFIER >)*
+  String s;
+  Token t;
+}
+{
+  {
+    s = "";
+  }
+  (
+    t=< LEGAL_IDENTIFIER >
+    {
+      s+=t.image;
+    }
+  )*
+  {
+    return s;
+  }
 }
 
 
@@ -365,22 +594,27 @@ void columnName() :
 //drop table account;
 void dropTableQuery() :
 {
+  String name;
 }
 {
-  (
-    < DROP_TABLE >
-    tableName()
-  )
+  < DROP_TABLE >
+  name=tableName()
+  {
+    dropTable(name);
+  }
 }
 
 //desc account;
 void descQuery() :
 {
+  String name;
 }
 {
-  (
-    < DESC >
-    tableName()  )
+  < DESC >
+  name=tableName()	
+  {
+    desc(name);
+  }
 }
 
 
@@ -536,6 +770,9 @@ void showTablesQuery() :
 }
 {
   < SHOW_TABLES >
+  {
+    showTables();
+  }
 }
 
 
