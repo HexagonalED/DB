@@ -24,9 +24,11 @@ class pair {
 
 class tableElement{
   String[] element;
+  String tableName;
 
-  public tableElement(String[] ss) {
+  public tableElement(String[] ss,String tableName) {
     this.element = ss;
+    this.tableName = tableName;
   }
 
 
@@ -35,7 +37,7 @@ class tableElement{
     String ret="";
     String type;
     if(element[0].equals("primary")) {
-      type = "primary";
+      type = "primary[["+tableName+"]]";
       len = element.length-1;
       ret = type+":"+element[1];
       for(int i=2;i<element.length;i++) {
@@ -45,7 +47,7 @@ class tableElement{
     else if(element[0].equals("foreign")) {
       String refTableName = element[1];
       len = element.length/2 -1;
-      type = "foreign["+refTableName+"]";
+      type = "foreign[["+tableName+"]]["+refTableName+"]";
       ret = type+":"+element[2]+"|"+element[3];
       for(int i=1;i<len;i++) {
         ret+="|=|"+element[i*2+2]+"|"+element[i*2+3];
@@ -59,7 +61,7 @@ class tableElement{
       else {
         String colName = element[0];
         boolean isNull = (element[3].equals("null"));
-        type = "column["+colName+"]";
+        type = "column[["+tableName+"]]["+colName+"]";
         ret = type+"[";
         if(element[1].equals("int"))
           ret+="int]";
@@ -288,6 +290,11 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
         }
       }
       else if(t.type.substring(0,6).equals("foreig")) {
+        //1. ReferenceTableExistenceError
+
+        //2. ReferenceColumnExistenceError
+
+        //3. ReferenceNonPrimaryKeyError
       }
       else continue;
     }
@@ -322,8 +329,9 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
                 do {
                   String keyString = new String(foundKey.getData(),"UTF-8");
               String dataString = new String(foundData.getData(),"UTF-8");
-              if(!keyString.substring(1,keyString.indexOf("}")).equals(name))
+              if(!keyString.substring(1,keyString.indexOf("}")).equals(name)) {
                 continue;
+              }
               else{
               }
                 }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
@@ -334,6 +342,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
           e.printStackTrace();
         }
   }
+
 
   public static void desc(String name) throws ParseException {
     //db search
@@ -496,7 +505,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       ss = columnDefinition();
     } else if (jj_2_13(3)) {
       ss = tableConstraintDefinition();
-          {if (true) return new tableElement(ss);}
+          {if (true) return new tableElement(ss,"");}
     } else {
       jj_consume_token(-1);
       throw new ParseException();
@@ -1294,40 +1303,6 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     finally { jj_save(48, xla); }
   }
 
-  static private boolean jj_3R_13() {
-    if (jj_scan_token(CREATE_TABLE)) return true;
-    if (jj_3R_27()) return true;
-    if (jj_3R_40()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_33() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_35()) {
-    jj_scanpos = xsp;
-    if (jj_3_36()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3_35() {
-    if (jj_3R_35()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_34() {
-    if (jj_3R_34()) return true;
-    return false;
-  }
-
-  static private boolean jj_3_19() {
-    if (jj_scan_token(CHAR)) return true;
-    if (jj_scan_token(LEFT_PAREN)) return true;
-    if (jj_scan_token(INT_VALUE)) return true;
-    return false;
-  }
-
   static private boolean jj_3R_34() {
     if (jj_scan_token(LEFT_PAREN)) return true;
     if (jj_3R_45()) return true;
@@ -1940,6 +1915,40 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
 
   static private boolean jj_3_20() {
     if (jj_scan_token(DATE)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_13() {
+    if (jj_scan_token(CREATE_TABLE)) return true;
+    if (jj_3R_27()) return true;
+    if (jj_3R_40()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_33() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_35()) {
+    jj_scanpos = xsp;
+    if (jj_3_36()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3_35() {
+    if (jj_3R_35()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_34() {
+    if (jj_3R_34()) return true;
+    return false;
+  }
+
+  static private boolean jj_3_19() {
+    if (jj_scan_token(CHAR)) return true;
+    if (jj_scan_token(LEFT_PAREN)) return true;
+    if (jj_scan_token(INT_VALUE)) return true;
     return false;
   }
 
