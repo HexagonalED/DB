@@ -12,6 +12,16 @@ import java.io.*;
 import java.util.*;
 
 
+class pair {
+  String type; //keyvalue
+  String defined;
+
+  public pair(String defined, String type) {
+    this.defined = defined;
+    this.type = type;
+  }
+}
+
 class tableElement{
   String[] element;
 
@@ -19,13 +29,53 @@ class tableElement{
     this.element = ss;
   }
 
-  public void define(){
+
+  public pair define(){
+    int len;
+    String ret="";
+    String type;
     if(element[0].equals("primary")) {
+      type = "primary";
+      len = element.length-1;
+      ret = type+":"+element[1];
+      for(int i=2;i<element.length;i++) {
+        ret+="|"+element[i];
+      }
     }
     else if(element[0].equals("foreign")) {
+      String refTableName = element[1];
+      len = element.length/2 -1;
+      type = "foreign["+refTableName+"]";
+      ret = type+":"+element[2]+"|"+element[3];
+      for(int i=1;i<len;i++) {
+        ret+="|=|"+element[i*2+2]+"|"+element[i*2+3];
+      }
     }
     else {
+      if(element.length!=4){
+        //error - columnDef parsed incorrectly
+        return null;
+      }
+      else {
+        String colName = element[0];
+        boolean isNull = (element[3].equals("null"));
+        type = "column["+colName+"]";
+        ret = type+"[";
+        if(element[1].equals("int"))
+          ret+="int]";
+        else if(element[1].equals("char"))
+          ret+="char("+element[2]+")]";
+        else if(element[1].equals("date"))
+          ret+="date]";
+          if(isNull){
+            ret+="[null]";
+          }
+          else{
+            ret+="[not null]";
+          }
+      }
     }
+    return new pair(ret,type);
   }
 }
 
@@ -76,9 +126,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
   private static Environment hexaEnv = null;
   private static Database hexaDB = null;
 
-  public static void main(String args []) throws ParseException
-  {
-    HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
+  private static void openDB(String dbName) {
         EnvironmentConfig envConf = new EnvironmentConfig();
         envConf.setAllowCreate(true);
         hexaEnv = new Environment(new File("db/"),envConf);
@@ -86,8 +134,33 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
         DatabaseConfig dbConf = new DatabaseConfig();
         dbConf.setAllowCreate(true);
         dbConf.setSortedDuplicates(true);
-        hexaDB = hexaEnv.openDatabase(null,"sampleDatabase",dbConf);
+        hexaDB = hexaEnv.openDatabase(null,dbName,dbConf);
+        Cursor cur = null;
+        DatabaseEntry key;
+        DatabaseEntry data;
 
+        try {
+          cur=hexaDB.openCursor(null,null);
+          key= new DatabaseEntry("tableList:".getBytes("UTF-8"));
+          data= new DatabaseEntry("".getBytes("UTF-8"));
+          cur.put(key,data);
+        }
+        catch(DatabaseException de) {
+        }
+        catch(UnsupportedEncodingException e) {
+          e.printStackTrace();
+        }
+  }
+
+  private static void closeDB() {
+    if(hexaDB != null) hexaDB.close();
+    if(hexaEnv != null) hexaEnv.close();
+  }
+
+  public static void main(String args []) throws ParseException
+  {
+    HexagonDBMSParser parser = new HexagonDBMSParser(System.in);
+    openDB("HexaDB");
         while (true)
     {
       System.out.print("HexagonDB_2012-11253> ");
@@ -145,19 +218,91 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     }
   }
 
-  public static void createTable(String name, ArrayList<tableElement > li) throws ParseException {
+  public static void createTable(String name, ArrayList<tableElement > li) throws ParseException {//name = tableName, li = tableElements
     //printMessage(q);
 
-        //db insert
+    //manage data input
+    pair[] elementsDefined = new pair[li.size()];
+    ArrayList<String> columns = new ArrayList<String>();
+    ArrayList<String> primary = new ArrayList<String>();
+    ArrayList<String> foreign = new ArrayList<String>();
+
+        //tableName Check
         Cursor cur = null;
+        DatabaseEntry foundKey = new DatabaseEntry();
+        DatabaseEntry foundData = new DatabaseEntry();
+        String tableList="";
+    try {
+                cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+                do {
+                  String keyString = new String(foundKey.getData(),"UTF-8");
+              String dataString = new String(foundData.getData(),"UTF-8");
+              if(!keyString.equals("tableList:"))
+                continue;
+              else{
+                tableList = dataString;
+              }
+                }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        }
+        catch(DatabaseException de) {
+        }
+        catch(UnsupportedEncodingException e) {
+          e.printStackTrace();
+        }
+
+
+
+    //columns check
+    for(int i=0;i<li.size();i++) {
+      tableElement t = li.get(i);
+      elementsDefined[i]=t.define();
+      if(elementsDefined[i].type.substring(0,6).equals("column")) {
+        String tempName = elementsDefined[i].type.substring(elementsDefined[i].type.indexOf("["),elementsDefined[i].type.indexOf("]")+1);
+        if(columns.contains(tempName)){
+          //DuplicateColumnDefError
+        }
+        else {
+          columns.add(tempName);
+        }
+      }
+    }
+
+    //constraint check
+    for(int i=0;i<elementsDefined.length;i++) {
+      boolean primaryExists = false;
+
+      pair t = elementsDefined[i];
+      if(t.type.substring(0,6).equals("primar")) {
+        if(primaryExists) {
+          //DuplicatePrimaryKeyError
+        }
+        else primaryExists = true;
+
+        String[] primaryColumns = t.defined.substring(8,t.defined.length()).split("|");
+        for(int j=0;j<primaryColumns.length;j++) {
+          if(!columns.contains(primaryColumns[j])) {
+            //NonExistingColumnDefError(#colName)
+          }
+          else
+            primary.add(primaryColumns[j]);
+        }
+      }
+      else if(t.type.substring(0,6).equals("foreig")) {
+      }
+      else continue;
+    }
+
+        //db insert
         DatabaseEntry key;
         DatabaseEntry data;
 
         try {
           cur=hexaDB.openCursor(null,null);
-          key= new DatabaseEntry("key".getBytes("UTF-8"));
-          data= new DatabaseEntry("data".getBytes("UTF-8"));
-          cur.put(key,data);
+          for(int i=0;i<li.size();i++) {
+            key= new DatabaseEntry(("{"+name+"}"+elementsDefined[i].type).getBytes("UTF-8"));
+            data= new DatabaseEntry(elementsDefined[i].defined.getBytes("UTF-8"));
+            cur.put(key,data);
+          }
         }
         catch(DatabaseException de) {
         }
@@ -165,49 +310,90 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
           e.printStackTrace();
         }
   }
+
   public static void dropTable(String name) throws ParseException{
-
-
-        Cursor cur = null;
-        DatabaseEntry key;
-        DatabaseEntry data;
     //db search
+        Cursor cur = null;
         DatabaseEntry foundKey = new DatabaseEntry();
         DatabaseEntry foundData = new DatabaseEntry();
 
-        cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
-        do {
-          String keyString = new String(foundKey.getData(),"UTF-8");
-          String dataString = new String(foundData.getData(),"UTF-8");
-        }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        try {
+                cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+                do {
+                  String keyString = new String(foundKey.getData(),"UTF-8");
+              String dataString = new String(foundData.getData(),"UTF-8");
+              if(!keyString.substring(1,keyString.indexOf("}")).equals(name))
+                continue;
+              else{
+              }
+                }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        }
+        catch(DatabaseException de) {
+        }
+        catch(UnsupportedEncodingException e) {
+          e.printStackTrace();
+        }
   }
+
   public static void desc(String name) throws ParseException {
-        Cursor cur = null;
-        DatabaseEntry key;
-        DatabaseEntry data;
     //db search
+        Cursor cur = null;
         DatabaseEntry foundKey = new DatabaseEntry();
         DatabaseEntry foundData = new DatabaseEntry();
+        boolean noSuchTable=true;
+        ArrayList<String> retStrings = new ArrayList<String>();
 
-        cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
-        do {
-          String keyString = new String(foundKey.getData(),"UTF-8");
-          String dataString = new String(foundData.getData(),"UTF-8");
-        }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        try {
+                cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+                do {
+                  String keyString = new String(foundKey.getData(),"UTF-8");
+              String dataString = new String(foundData.getData(),"UTF-8");
+              if(!keyString.substring(1,keyString.indexOf("}")).equals(name))
+                continue;
+              else{
+                noSuchTable = false;
+                retStrings.add(dataString);
+              }
+                }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        }
+        catch(DatabaseException de) {
+        }
+        catch(UnsupportedEncodingException e) {
+          e.printStackTrace();
+        }
+        if(noSuchTable) {
+          //error
+        }
+        else {
+          //print retStrings in form
+        }
   }
   public static void showTables() throws ParseException {
-        Cursor cur = null;
-        DatabaseEntry key;
-        DatabaseEntry data;
     //db search
+        Cursor cur = null;
         DatabaseEntry foundKey = new DatabaseEntry();
         DatabaseEntry foundData = new DatabaseEntry();
+        String tableList = "";
 
-        cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
-        do {
-          String keyString = new String(foundKey.getData(),"UTF-8");
-          String dataString = new String(foundData.getData(),"UTF-8");
-        }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        try {
+                cur.getFirst(foundKey,foundData,LockMode.DEFAULT);
+                do {
+                  String keyString = new String(foundKey.getData(),"UTF-8");
+              String dataString = new String(foundData.getData(),"UTF-8");
+              if(keyString.substring(0,10).equals("tableList:")){
+                tableList = dataString;
+              }
+                }while(cur.getNext(foundKey,foundData,LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        }
+        catch(DatabaseException de) {
+        }
+        catch(UnsupportedEncodingException e) {
+          e.printStackTrace();
+        }
+    if(tableList.equals("")) {
+    }
+    else {
+    }
   }
 
   static final public boolean command() throws ParseException {
@@ -390,6 +576,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     tName = tableName();
     realNameList = columnNameList();
     if(refNameList.length!=realNameList.length) {
+      //referenceTypeError
     }
     ret = new String[(refNameList.length+1)*2];
     ret[0] = "foreign";
@@ -1107,6 +1294,28 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     finally { jj_save(48, xla); }
   }
 
+  static private boolean jj_3R_13() {
+    if (jj_scan_token(CREATE_TABLE)) return true;
+    if (jj_3R_27()) return true;
+    if (jj_3R_40()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_33() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_35()) {
+    jj_scanpos = xsp;
+    if (jj_3_36()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3_35() {
+    if (jj_3R_35()) return true;
+    return false;
+  }
+
   static private boolean jj_3_34() {
     if (jj_3R_34()) return true;
     return false;
@@ -1213,11 +1422,6 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_7() {
-    if (jj_3R_16()) return true;
-    return false;
-  }
-
   static private boolean jj_3R_30() {
     if (jj_3R_31()) return true;
     Token xsp;
@@ -1228,8 +1432,8 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_6() {
-    if (jj_3R_15()) return true;
+  static private boolean jj_3_7() {
+    if (jj_3R_16()) return true;
     return false;
   }
 
@@ -1240,6 +1444,11 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       xsp = jj_scanpos;
       if (jj_3_29()) { jj_scanpos = xsp; break; }
     }
+    return false;
+  }
+
+  static private boolean jj_3_6() {
+    if (jj_3R_15()) return true;
     return false;
   }
 
@@ -1365,12 +1574,6 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_2() {
-    if (jj_scan_token(EXIT)) return true;
-    if (jj_scan_token(SEMICOLON)) return true;
-    return false;
-  }
-
   static private boolean jj_3R_43() {
     if (jj_3R_50()) return true;
     Token xsp;
@@ -1379,14 +1582,20 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_1() {
-    if (jj_3R_11()) return true;
+  static private boolean jj_3_2() {
+    if (jj_scan_token(EXIT)) return true;
+    if (jj_scan_token(SEMICOLON)) return true;
     return false;
   }
 
   static private boolean jj_3_24() {
     if (jj_3R_27()) return true;
     if (jj_scan_token(PERIOD)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_1() {
+    if (jj_3R_11()) return true;
     return false;
   }
 
@@ -1571,13 +1780,13 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3_13() {
-    if (jj_3R_22()) return true;
+  static private boolean jj_3_44() {
+    if (jj_scan_token(NOT)) return true;
     return false;
   }
 
-  static private boolean jj_3_44() {
-    if (jj_scan_token(NOT)) return true;
+  static private boolean jj_3_13() {
+    if (jj_3R_22()) return true;
     return false;
   }
 
@@ -1688,12 +1897,6 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3R_40() {
-    if (jj_scan_token(LEFT_PAREN)) return true;
-    if (jj_3R_20()) return true;
-    return false;
-  }
-
   static private boolean jj_3R_51() {
     Token xsp;
     xsp = jj_scanpos;
@@ -1709,6 +1912,12 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     jj_scanpos = xsp;
     if (jj_3R_52()) return true;
     }
+    return false;
+  }
+
+  static private boolean jj_3R_40() {
+    if (jj_scan_token(LEFT_PAREN)) return true;
+    if (jj_3R_20()) return true;
     return false;
   }
 
@@ -1729,30 +1938,8 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
     return false;
   }
 
-  static private boolean jj_3R_13() {
-    if (jj_scan_token(CREATE_TABLE)) return true;
-    if (jj_3R_27()) return true;
-    if (jj_3R_40()) return true;
-    return false;
-  }
-
   static private boolean jj_3_20() {
     if (jj_scan_token(DATE)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_33() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_35()) {
-    jj_scanpos = xsp;
-    if (jj_3_36()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3_35() {
-    if (jj_3R_35()) return true;
     return false;
   }
 
