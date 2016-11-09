@@ -37,7 +37,7 @@ class tableElement{
     String ret="";
     String type;
     if(element[0].equals("primary")) {
-      type = "primary[["+tableName+"]]";
+      type = "primary";
       len = element.length-1;
       ret = type+":"+element[1];
       for(int i=2;i<element.length;i++) {
@@ -47,7 +47,7 @@ class tableElement{
     else if(element[0].equals("foreign")) {
       String refTableName = element[1];
       len = element.length/2 -1;
-      type = "foreign[["+tableName+"]]["+refTableName+"]";
+      type = "foreign"+"["+refTableName+"]";
       ret = type+":"+element[2]+"|"+element[3];
       for(int i=1;i<len;i++) {
         ret+="|=|"+element[i*2+2]+"|"+element[i*2+3];
@@ -61,7 +61,7 @@ class tableElement{
       else {
         String colName = element[0];
         boolean isNull = (element[3].equals("null"));
-        type = "column[["+tableName+"]]["+colName+"]";
+        type = "column["+colName+"]";
         ret = type+"[";
         if(element[1].equals("int"))
           ret+="int]";
@@ -505,7 +505,7 @@ public class HexagonDBMSParser implements HexagonDBMSParserConstants {
       ss = columnDefinition();
     } else if (jj_2_13(3)) {
       ss = tableConstraintDefinition();
-          {if (true) return new tableElement(ss,"");}
+          {if (true) return new tableElement(ss);}
     } else {
       jj_consume_token(-1);
       throw new ParseException();
